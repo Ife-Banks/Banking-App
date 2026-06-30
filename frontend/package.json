@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "npx tailwindcss -i ./css/styles.css -o ./js/tailwind.css --minify",
-    "build:watch": "npx tailwindcss -i ./css/styles.css -o ./js/tailwind.css --watch",
+    "build": "node ./node_modules/.bin/tailwindcss -i ./css/styles.css -o ./js/tailwind.css --minify",
+    "build:watch": "node ./node_modules/.bin/tailwindcss -i ./css/styles.css -o ./js/tailwind.css --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

@@ -2,7 +2,7 @@ services:
   - type: web
     name: smartbank
     env: python
-    pythonVersion: "3.12"
+    nodeVersion: "20"
     region: oregon
     plan: free
     buildCommand: bash build.sh
