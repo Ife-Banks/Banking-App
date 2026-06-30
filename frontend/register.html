@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="icon" type="image/svg+xml" href="/app/favicon.svg"/>
+  <title>SmartBank — Register</title>
+  <link rel="stylesheet" href="/app/js/tailwind.css"/>
+  <script src="/app/js/htmx.js"></script>
+  <script src="/app/js/json-enc.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+    * { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="min-h-screen bg-[#E8EAF3] text-[#2D2B3D] antialiased flex items-center justify-center p-6">
+
+<div class="w-full max-w-md space-y-7">
+  <div class="text-center">
+    <div class="inline-flex w-14 h-14 rounded-2xl bg-white items-center justify-center text-[#6C63FF] font-black text-lg tracking-widest shadow-[6px_6px_14px_#c8c9d1,-6px_-6px_14px_#ffffff]">
+      SB
+    </div>
+    <h1 class="text-2xl font-black tracking-tight text-[#2D2B3D] mt-4">SmartBank</h1>
+    <p class="text-xs font-medium text-[#8B8794] mt-1 tracking-wide">Open a free account</p>
+  </div>
+
+  <div id="step-register" class="bg-[#F5F6FB] rounded-[32px] p-8 shadow-[10px_10px_24px_#c8c9d1,-10px_-10px_24px_#ffffff] transition-all duration-300">
+    <div class="mb-6">
+      <h2 class="text-xs font-bold uppercase tracking-widest text-[#6C63FF]">Create account</h2>
+    </div>
+    
+    <div id="reg-error" class="hidden mb-5 p-4 bg-[#FFF0F0] rounded-2xl text-[#E05050] text-xs font-semibold tracking-wide shadow-[inset_3px_3px_6px_#d8d4dd,inset_-3px_-3px_6px_#ffffff]"></div>
+
+    <form class="space-y-4" hx-post="/auth/register" hx-ext="json-enc" hx-target="#reg-error" hx-swap="none"
+      hx-on::config-request="prepareRegisterRequest(event)"
+      hx-on::after-request="handleRegisterResponse(event)">
+      
+      <div class="space-y-1.5">
+        <label class="block text-[10px] font-bold uppercase tracking-wider text-[#8B8794]">Full name</label>
+        <input id="reg-name" name="full_name" type="text" placeholder="Chidera Okonkwo" required
+          class="w-full px-4 py-3.5 bg-[#F5F6FB] rounded-2xl text-xs font-medium text-[#2D2B3D] placeholder-[#B8B4C4] focus:outline-none transition-all shadow-[inset_4px_4px_8px_#d8d4dd,inset_-4px_-4px_8px_#ffffff] focus:shadow-[inset_6px_6px_12px_#c8c9d1,inset_-6px_-6px_12px_#ffffff]"/>
+      </div>
+      
+      <div class="space-y-1.5">
+        <label class="block text-[10px] font-bold uppercase tracking-wider text-[#8B8794]">Email address</label>
+        <input id="reg-email" name="email" type="email" placeholder="chidera@example.com" required
+          class="w-full px-4 py-3.5 bg-[#F5F6FB] rounded-2xl text-xs font-medium text-[#2D2B3D] placeholder-[#B8B4C4] focus:outline-none transition-all shadow-[inset_4px_4px_8px_#d8d4dd,inset_-4px_-4px_8px_#ffffff] focus:shadow-[inset_6px_6px_12px_#c8c9d1,inset_-6px_-6px_12px_#ffffff]"/>
+      </div>
+
+      <div class="space-y-1.5">
+        <label class="block text-[10px] font-bold uppercase tracking-wider text-[#8B8794]">Phone number</label>
+        <input id="reg-phone" name="phone_number" type="tel" placeholder="08012345678" required
+          class="w-full px-4 py-3.5 bg-[#F5F6FB] rounded-2xl text-xs font-medium text-[#2D2B3D] placeholder-[#B8B4C4] focus:outline-none transition-all shadow-[inset_4px_4px_8px_#d8d4dd,inset_-4px_-4px_8px_#ffffff] focus:shadow-[inset_6px_6px_12px_#c8c9d1,inset_-6px_-6px_12px_#ffffff]"/>
+      </div>
+
+      <div class="space-y-1.5">
+        <span class="block text-[10px] font-bold uppercase tracking-wider text-[#8B8794]">Verify with</span>
+        <div class="flex items-center gap-6 p-1">
+          <label class="inline-flex items-center text-xs text-[#2D2B3D] font-medium cursor-pointer select-none">
+            <input id="channel-sms" name="verification_channel" type="radio" value="sms" checked
+              class="w-4 h-4 mr-2 accent-[#6C63FF] focus:ring-0" />
+            SMS
+          </label>
+          <label class="inline-flex items-center text-xs text-[#2D2B3D] font-medium cursor-pointer select-none">
+            <input id="channel-email" name="verification_channel" type="radio" value="email"
+              class="w-4 h-4 mr-2 accent-[#6C63FF] focus:ring-0" />
+            Email
+          </label>
+        </div>
+      </div>
+      
+      <div class="space-y-1.5">
+        <label class="block text-[10px] font-bold uppercase tracking-wider text-[#8B8794]">Password</label>
+        <input id="reg-password" name="password" type="password" placeholder="Min. 8 characters" required
+          class="w-full px-4 py-3.5 bg-[#F5F6FB] rounded-2xl text-xs font-medium text-[#2D2B3D] placeholder-[#B8B4C4] focus:outline-none transition-all shadow-[inset_4px_4px_8px_#d8d4dd,inset_-4px_-4px_8px_#ffffff] focus:shadow-[inset_6px_6px_12px_#c8c9d1,inset_-6px_-6px_12px_#ffffff]"/>
+      </div>
+
+      <button type="submit"
+        class="w-full bg-[#6C63FF] text-white font-bold text-xs uppercase tracking-widest py-4 rounded-2xl transition-all shadow-[6px_6px_14px_#c8c9d1,-6px_-6px_14px_#ffffff] hover:shadow-[4px_4px_10px_#c8c9d1,-4px_-4px_10px_#ffffff] active:shadow-[inset_4px_4px_8px_#5248d9,inset_-4px_-4px_8px_#867eff] mt-2">
+        Create account
+      </button>
+    </form>
+    
+    <div class="mt-6 pt-6 border-t border-[#E0DFE8] text-center">
+      <p class="text-xs text-[#8B8794] font-light">
+        Already have an account? <a href="/app/login.html" class="text-[#6C63FF] font-bold hover:underline ml-1">Sign in</a>
+      </p>
+    </div>
+  </div>
+
+  <div id="step-otp" class="hidden bg-[#F5F6FB] rounded-[32px] p-8 shadow-[10px_10px_24px_#c8c9d1,-10px_-10px_24px_#ffffff] transition-all duration-300">
+    <div class="mb-6">
+      <h2 class="text-xs font-bold uppercase tracking-widest text-[#6C63FF]">Verify your contact</h2>
+      <p id="otp-hint" class="text-[11px] text-[#8B8794] mt-1.5 font-light"></p>
+    </div>
+
+    <div id="otp-error" class="hidden mb-5 p-4 bg-[#FFF0F0] rounded-2xl text-[#E05050] text-xs font-semibold tracking-wide shadow-[inset_3px_3px_6px_#d8d4dd,inset_-3px_-3px_6px_#ffffff]"></div>
+
+    <form class="space-y-4" hx-post="/auth/verify-otp" hx-ext="json-enc" hx-target="#otp-error" hx-swap="none"
+      hx-on::config-request="prepareVerifyRequest(event)"
+      hx-on::after-request="handleVerifyResponse(event)">
+      <input id="verify-identifier" name="identifier" type="hidden" />
+      
+      <div class="space-y-2">
+        <input id="reg-otp" name="otp_code" type="text" maxlength="6" placeholder="000000"
+          class="w-full px-4 py-4 bg-[#F5F6FB] rounded-2xl text-xl font-bold font-mono tracking-[0.6em] text-center text-[#2D2B3D] placeholder-[#D0CDDA] focus:outline-none transition-all shadow-[inset_4px_4px_8px_#d8d4dd,inset_-4px_-4px_8px_#ffffff] focus:shadow-[inset_6px_6px_12px_#c8c9d1,inset_-6px_-6px_12px_#ffffff]"/>
+      </div>
+
+      <button type="submit"
+        class="w-full bg-[#6C63FF] text-white font-bold text-xs uppercase tracking-widest py-4 rounded-2xl transition-all shadow-[6px_6px_14px_#c8c9d1,-6px_-6px_14px_#ffffff] hover:shadow-[4px_4px_10px_#c8c9d1,-4px_-4px_10px_#ffffff] active:shadow-[inset_4px_4px_8px_#5248d9,inset_-4px_-4px_8px_#867eff] mt-2">
+        Verify contact
+      </button>
+    </form>
+  </div>
+
+  <div id="step-success" class="hidden bg-[#F5F6FB] rounded-[32px] p-8 text-center shadow-[10px_10px_24px_#c8c9d1,-10px_-10px_24px_#ffffff] transition-all duration-300">
+    <div class="w-14 h-14 rounded-2xl bg-[#10B981] flex items-center justify-center text-white mx-auto mb-4 shadow-[4px_4px_10px_#c8c9d1,-4px_-4px_10px_#ffffff]">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+      </svg>
+    </div>
+    <h2 class="text-sm font-bold uppercase tracking-widest text-[#2D2B3D] mb-2">Account created</h2>
+    <p id="success-message" class="text-xs text-[#8B8794] font-light mb-6"></p>
+    <a href="/app/login.html" class="block w-full bg-[#6C63FF] hover:bg-[#5A52E0] text-white font-bold text-xs uppercase tracking-widest py-4 rounded-2xl transition-all shadow-[6px_6px_14px_#c8c9d1,-6px_-6px_14px_#ffffff] active:shadow-[inset_4px_4px_8px_#5248d9,inset_-4px_-4px_8px_#867eff] text-center">
+      Sign in now
+    </a>
+  </div>
+</div>
+
+<script src="/app/js/auth.js"></script>
+<script>
+  let registeredContact = "";
+  let registeredChannel = "sms";
+
+  function showError(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = Array.isArray(msg) ? msg.map(e => e.msg).join("; ") : msg;
+    el.classList.remove("hidden");
+  }
+
+  function prepareRegisterRequest(event) {
+    document.getElementById("reg-error").classList.add("hidden");
+    registeredContact = document.getElementById("channel-email").checked
+      ? document.getElementById("reg-email").value.trim()
+      : document.getElementById("reg-phone").value.trim();
+    registeredChannel = document.getElementById("channel-email").checked ? "email" : "sms";
+  }
+
+  function handleRegisterResponse(event) {
+    const data = JSON.parse(event.detail.xhr.responseText || "{}");
+    if (event.detail.xhr.status >= 400) {
+      showError("reg-error", data.detail || "Registration failed");
+      return;
+    }
+    const label = registeredChannel === "email" ? "email address" : "phone number";
+    document.getElementById("otp-hint").textContent = `We sent a 6-digit code to your ${label}.`;
+    document.getElementById("step-register").classList.add("hidden");
+    document.getElementById("step-otp").classList.remove("hidden");
+  }
+
+  function prepareVerifyRequest(event) {
+    const otp = document.getElementById("reg-otp").value.trim();
+    document.getElementById("otp-error").classList.add("hidden");
+    document.getElementById("verify-identifier").value = registeredContact;
+    event.detail.parameters.identifier = registeredContact;
+    event.detail.parameters.otp_code = otp;
+  }
+
+  function handleVerifyResponse(event) {
+    const data = JSON.parse(event.detail.xhr.responseText || "{}");
+    if (event.detail.xhr.status >= 400) {
+      showError("otp-error", data.detail || "Invalid OTP");
+      return;
+    }
+    const successText = registeredChannel === "email"
+      ? "Your email is verified and your SmartBank account is ready."
+      : "Your phone number is verified and your SmartBank account is ready.";
+    document.getElementById("success-message").textContent = successText;
+    document.getElementById("step-otp").classList.add("hidden");
+    document.getElementById("step-success").classList.remove("hidden");
+  }
+</script>
+</body>
+</html>

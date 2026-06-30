@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="icon" type="image/svg+xml" href="/app/favicon.svg"/>
+  <title>SmartBank — Profile</title>
+  <link rel="stylesheet" href="/app/js/tailwind.css"/>
+  <script src="/app/js/htmx.js"></script>
+  <script src="/app/js/json-enc.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+    * { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="min-h-screen bg-[#E8EAF3] text-[#2D2B3D] antialiased">
+
+<nav class="bg-[#F5F6FB] border-b border-[#E0DFE8] px-8 py-5 flex justify-between items-center sticky top-0 z-50 shadow-[0_4px_12px_#d0d1da]">
+  <a href="/app/dashboard.html" class="text-[#2D2B3D] font-black text-lg tracking-widest uppercase">SmartBank</a>
+  <button onclick="logout()" class="text-xs font-semibold uppercase tracking-wider text-[#8B8794] hover:text-[#6C63FF] transition-colors">Sign out</button>
+</nav>
+
+<main class="max-w-md mx-auto px-4 py-10 space-y-10">
+  <a href="/app/dashboard.html" class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#8B8794] hover:text-[#6C63FF] transition-colors">
+    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+    Back to dashboard
+  </a>
+
+  <div class="space-y-4">
+    <div class="flex items-baseline justify-between pb-3">
+      <h2 class="text-xs font-bold uppercase tracking-widest text-[#8B8794]">My Profile</h2>
+    </div>
+    
+    <div id="profile-fields" class="divide-y divide-[#E0DFE8] bg-[#F5F6FB] rounded-[32px] shadow-[10px_10px_24px_#c8c9d1,-10px_-10px_24px_#ffffff] overflow-hidden text-sm">
+      <div class="px-6 py-12 text-center text-[#8B8794] tracking-wide font-light">Loading profile details...</div>
+    </div>
+  </div>
+
+  <div class="space-y-4">
+    <div class="pb-3">
+      <h2 class="text-xs font-bold uppercase tracking-widest text-[#6C63FF]" id="new-pin-label">Transfer PIN</h2>
+      <p id="pin-status-text" class="text-[11px] text-[#8B8794] mt-1 font-light leading-relaxed">Required for processing outgoing financial transactions safely.</p>
+    </div>
+
+    <div id="pin-error" class="hidden p-4 bg-[#FFF0F0] rounded-2xl text-[#E05050] text-xs font-medium tracking-wide shadow-[inset_3px_3px_6px_#d8d4dd,inset_-3px_-3px_6px_#ffffff]"></div>
+    <div id="pin-success" class="hidden p-4 bg-[#10B981] text-white rounded-2xl text-xs font-medium tracking-wide shadow-[inset_3px_3px_6px_#0b8d5c,inset_-3px_-3px_6px_#34d399]"></div>
+
+    <form id="pin-form" class="space-y-5 bg-[#F5F6FB] rounded-[32px] p-7 shadow-[10px_10px_24px_#c8c9d1,-10px_-10px_24px_#ffffff]" onsubmit="submitPin(event)">
+      <div id="current-pin-field" class="hidden space-y-1.5">
+        <label class="block text-[10px] font-bold uppercase tracking-wider text-[#8B8794]">Current PIN</label>
+        <input id="current-pin" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]{4}"
+          class="w-full px-4 py-3.5 bg-[#F5F6FB] rounded-2xl text-base tracking-[1.5em] text-center focus:outline-none transition-all font-mono text-[#2D2B3D] font-bold shadow-[inset_4px_4px_8px_#d8d4dd,inset_-4px_-4px_8px_#ffffff] focus:shadow-[inset_6px_6px_12px_#c8c9d1,inset_-6px_-6px_12px_#ffffff]"/>
+      </div>
+      
+      <div class="space-y-1.5">
+        <label class="block text-[10px] font-bold uppercase tracking-wider text-[#8B8794]">Secure Pin Code</label>
+        <input id="new-pin" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" required
+          placeholder="&#xb7;&#xb7;&#xb7;&#xb7;"
+          class="w-full px-4 py-3.5 bg-[#F5F6FB] rounded-2xl text-base tracking-[1.5em] text-center focus:outline-none transition-all font-mono text-[#2D2B3D] font-bold placeholder-[#D0CDDA] shadow-[inset_4px_4px_8px_#d8d4dd,inset_-4px_-4px_8px_#ffffff] focus:shadow-[inset_6px_6px_12px_#c8c9d1,inset_-6px_-6px_12px_#ffffff]"/>
+      </div>
+
+      <div class="space-y-1.5">
+        <label class="block text-[10px] font-bold uppercase tracking-wider text-[#8B8794]">Confirm Pin Code</label>
+        <input id="confirm-pin" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" required
+          placeholder="&#xb7;&#xb7;&#xb7;&#xb7;"
+          class="w-full px-4 py-3.5 bg-[#F5F6FB] rounded-2xl text-base tracking-[1.5em] text-center focus:outline-none transition-all font-mono text-[#2D2B3D] font-bold placeholder-[#D0CDDA] shadow-[inset_4px_4px_8px_#d8d4dd,inset_-4px_-4px_8px_#ffffff] focus:shadow-[inset_6px_6px_12px_#c8c9d1,inset_-6px_-6px_12px_#ffffff]"/>
+      </div>
+
+      <button type="submit" id="pin-submit-btn"
+        class="w-full bg-[#6C63FF] hover:bg-[#5A52E0] text-white font-semibold text-xs uppercase tracking-widest py-4 rounded-2xl transition-all shadow-[6px_6px_14px_#c8c9d1,-6px_-6px_14px_#ffffff] active:shadow-[inset_4px_4px_8px_#5248d9,inset_-4px_-4px_8px_#867eff]">
+        Save Security Pin
+      </button>
+    </form>
+  </div>
+</main>
+
+<script src="/app/js/auth.js"></script>
+<script>
+  requireAuth();
+
+  let hasPin = false;
+
+  function tierLabel(tier) {
+    return { tier_1: "Tier 1 Limit", tier_2: "Tier 2 Limit", tier_3: "Tier 3 Limit" }[tier] || tier;
+  }
+
+  function formatMoney(n) {
+    return "\u20A6" + Number(n).toLocaleString("en-NG", { minimumFractionDigits: 2 });
+  }
+
+  async function loadProfile() {
+    const res = await apiFetch("/accounts/me");
+    if (!res?.ok) return;
+    const p = await res.json();
+    hasPin = p.has_transfer_pin;
+    localStorage.setItem("user", JSON.stringify(p));
+
+    document.getElementById("profile-fields").innerHTML = `
+      <div class="px-6 py-4.5 flex justify-between items-center gap-4">
+        <span class="text-[#8B8794] text-xs font-medium tracking-wide">Full Name</span>
+        <span class="font-semibold text-[#2D2B3D] text-right">${p.full_name}</span>
+      </div>
+      <div class="px-6 py-4.5 flex justify-between items-center gap-4">
+        <span class="text-[#8B8794] text-xs font-medium tracking-wide">Email Address</span>
+        <span class="font-medium text-[#2D2B3D] text-right break-all max-w-[200px]">${p.email}</span>
+      </div>
+      <div class="px-6 py-4.5 flex justify-between items-center gap-4">
+        <span class="text-[#8B8794] text-xs font-medium tracking-wide">Phone Number</span>
+        <span class="font-semibold text-[#2D2B3D]">${p.phone_number}</span>
+      </div>
+      <div class="px-6 py-4.5 flex justify-between items-center gap-4">
+        <span class="text-[#8B8794] text-xs font-medium tracking-wide">Account Number</span>
+        <span class="font-mono font-bold text-[#6C63FF] bg-[#EEEFF5] px-2.5 py-1 rounded-xl text-xs shadow-[inset_2px_2px_4px_#d8d4dd,inset_-2px_-2px_4px_#ffffff]">${p.account?.account_number || "—"}</span>
+      </div>
+      <div class="px-6 py-4.5 flex justify-between items-center gap-4">
+        <span class="text-[#8B8794] text-xs font-medium tracking-wide">KYC Status</span>
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-[#6C63FF] text-white shadow-[2px_2px_4px_#c8c9d1,-2px_-2px_4px_#ffffff]">${tierLabel(p.kyc_tier)}</span>
+      </div>
+      <div class="px-6 py-4.5 flex justify-between items-center gap-4">
+        <span class="text-[#8B8794] text-xs font-medium tracking-wide">Single Limit</span>
+        <span class="font-semibold text-[#2D2B3D]">${formatMoney(p.transfer_single_limit_ngn)}</span>
+      </div>
+      <div class="px-6 py-4.5 flex justify-between items-center gap-4">
+        <span class="text-[#8B8794] text-xs font-medium tracking-wide">Daily Limit</span>
+        <span class="font-semibold text-[#2D2B3D]">${formatMoney(p.transfer_daily_limit_ngn)}</span>
+      </div>
+      <div class="px-6 py-4.5 flex justify-between items-center gap-4">
+        <span class="text-[#8B8794] text-xs font-medium tracking-wide">Account Status</span>
+        <span class="font-bold uppercase tracking-wider text-xs text-[#2D2B3D]">${p.account_status}</span>
+      </div>
+      <div class="px-6 py-4.5 flex justify-between items-center gap-4">
+        <span class="text-[#8B8794] text-xs font-medium tracking-wide">Phone Verified</span>
+        <span class="font-semibold text-[#2D2B3D] text-xs uppercase tracking-wider">${p.phone_verified ? "Yes" : "No"}</span>
+      </div>
+      <div class="px-6 py-4.5 flex justify-between items-center gap-4">
+        <span class="text-[#8B8794] text-xs font-medium tracking-wide">NIN Verified</span>
+        <span class="font-semibold text-[#2D2B3D] text-xs uppercase tracking-wider">${p.nin_verified ? "Yes" : "No"}</span>
+      </div>
+      <div class="px-6 py-4.5 flex justify-between items-center gap-4">
+        <span class="text-[#8B8794] text-xs font-medium tracking-wide">Registration Date</span>
+        <span class="font-medium text-[#2D2B3D]">${new Date(p.created_at).toLocaleDateString("en-NG", { day: "numeric", month: "long", year: "numeric" })}</span>
+      </div>`;
+
+    setupPinForm(hasPin);
+  }
+
+  function setupPinForm(hasTransferPin) {
+    document.getElementById("current-pin-field").classList.toggle("hidden", !hasTransferPin);
+    document.getElementById("new-pin-label").textContent = hasTransferPin ? "Change Security PIN" : "Setup Account PIN";
+    document.getElementById("pin-submit-btn").textContent = hasTransferPin ? "Update Security PIN" : "Establish Secure PIN";
+    document.getElementById("pin-status-text").textContent = hasTransferPin
+      ? "Your transfer verification code is fully active. Verify identity to update credentials."
+      : "No validation PIN discovered. Please configure an access credential prior to launching outbound funds.";
+  }
+
+  async function submitPin(e) {
+    e.preventDefault();
+    const errEl = document.getElementById("pin-error");
+    const okEl = document.getElementById("pin-success");
+    errEl.classList.add("hidden");
+    okEl.classList.add("hidden");
+
+    const body = {
+      pin: document.getElementById("new-pin").value,
+      confirm_pin: document.getElementById("confirm-pin").value,
+    };
+    if (hasPin) {
+      body.current_pin = document.getElementById("current-pin").value;
+    }
+
+    const res = await apiFetch("/accounts/transfer-pin", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+    if (!res) return;
+    const data = await res.json();
+    if (!res.ok) {
+      errEl.textContent = formatApiError(data, "System validation failure");
+      errEl.classList.remove("hidden");
+      return;
+    }
+    okEl.textContent = data.message || "Credential successfully synchronized";
+    okEl.classList.remove("hidden");
+    document.getElementById("pin-form").reset();
+    hasPin = true;
+    setupPinForm(true);
+    loadProfile();
+  }
+
+  loadProfile();
+</script>
+</body>
+</html>

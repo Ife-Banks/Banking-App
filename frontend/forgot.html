@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="icon" type="image/svg+xml" href="/app/favicon.svg"/>
+  <title>SmartBank — Reset password</title>
+  <link rel="stylesheet" href="/app/js/tailwind.css"/>
+  <script src="/app/js/htmx.js"></script>
+  <script src="/app/js/json-enc.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+    * { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="min-h-screen bg-[#E8EAF3] text-[#2D2B3D] antialiased flex items-center justify-center p-4">
+
+<div class="w-full max-w-md space-y-7">
+  <div class="text-center">
+    <div class="inline-flex w-14 h-14 rounded-2xl bg-white items-center justify-center text-[#6C63FF] font-black text-lg tracking-widest shadow-[6px_6px_14px_#c8c9d1,-6px_-6px_14px_#ffffff]">
+      SB
+    </div>
+    <h1 class="text-2xl font-black tracking-tight text-[#2D2B3D] mt-4">SmartBank</h1>
+    <p class="text-xs font-medium text-[#8B8794] mt-1 tracking-wide">Reset your password</p>
+  </div>
+
+  <div id="step-phone" class="bg-[#F5F6FB] rounded-[32px] p-8 shadow-[10px_10px_24px_#c8c9d1,-10px_-10px_24px_#ffffff]">
+    <h2 class="text-xs font-bold uppercase tracking-widest text-[#6C63FF] mb-6">Forgot password</h2>
+    <div id="phone-error" class="hidden mb-4 p-4 bg-[#FFF0F0] rounded-2xl text-[#E05050] text-xs font-semibold shadow-[inset_3px_3px_6px_#d8d4dd,inset_-3px_-3px_6px_#ffffff]"></div>
+    <form class="space-y-4" hx-post="/auth/forgot-password" hx-ext="json-enc" hx-target="#phone-error" hx-swap="none"
+      hx-on::config-request="prepareForgotRequest(event)"
+      hx-on::after-request="handleForgotResponse(event)">
+      <div class="space-y-1.5">
+        <label class="block text-[10px] font-bold uppercase tracking-wider text-[#8B8794]">Phone number or email</label>
+        <input id="forgot-identifier" name="identifier" type="text" placeholder="08012345678 or name@example.com"
+          class="w-full px-4 py-3.5 bg-[#F5F6FB] rounded-2xl text-xs font-medium text-[#2D2B3D] placeholder-[#B8B4C4] focus:outline-none transition-all shadow-[inset_4px_4px_8px_#d8d4dd,inset_-4px_-4px_8px_#ffffff] focus:shadow-[inset_6px_6px_12px_#c8c9d1,inset_-6px_-6px_12px_#ffffff]"/>
+      </div>
+      <button type="submit" class="w-full bg-[#6C63FF] text-white font-bold text-xs uppercase tracking-widest py-4 rounded-2xl transition-all shadow-[6px_6px_14px_#c8c9d1,-6px_-6px_14px_#ffffff] hover:shadow-[4px_4px_10px_#c8c9d1,-4px_-4px_10px_#ffffff] active:shadow-[inset_4px_4px_8px_#5248d9,inset_-4px_-4px_8px_#867eff]">
+        Send reset OTP
+      </button>
+    </form>
+    <p class="text-center text-xs text-[#8B8794] mt-6">
+      <a href="/app/login.html" class="text-[#6C63FF] font-bold hover:underline">Back to sign in</a>
+    </p>
+  </div>
+
+  <div id="step-reset" class="hidden bg-[#F5F6FB] rounded-[32px] p-8 shadow-[10px_10px_24px_#c8c9d1,-10px_-10px_24px_#ffffff]">
+    <h2 class="text-xs font-bold uppercase tracking-widest text-[#6C63FF] mb-2">Enter OTP</h2>
+    <p class="text-[11px] text-[#8B8794] font-light mb-6">Use the code printed in the server terminal.</p>
+    <div id="reset-error" class="hidden mb-4 p-4 bg-[#FFF0F0] rounded-2xl text-[#E05050] text-xs font-semibold shadow-[inset_3px_3px_6px_#d8d4dd,inset_-3px_-3px_6px_#ffffff]"></div>
+    <form class="space-y-4" hx-post="/auth/reset-password" hx-ext="json-enc" hx-target="#reset-error" hx-swap="none"
+      hx-on::config-request="prepareResetRequest(event)"
+      hx-on::after-request="handleResetResponse(event)">
+      <div class="space-y-1.5">
+        <label class="block text-[10px] font-bold uppercase tracking-wider text-[#8B8794]">Verification Code</label>
+        <input id="reset-otp" name="otp_code" type="text" maxlength="6" placeholder="000000"
+          class="w-full px-4 py-3.5 bg-[#F5F6FB] rounded-2xl text-sm text-center tracking-widest text-lg font-mono text-[#2D2B3D] placeholder-[#D0CDDA] focus:outline-none transition-all shadow-[inset_4px_4px_8px_#d8d4dd,inset_-4px_-4px_8px_#ffffff] focus:shadow-[inset_6px_6px_12px_#c8c9d1,inset_-6px_-6px_12px_#ffffff]"/>
+      </div>
+      <div class="space-y-1.5">
+        <label class="block text-[10px] font-bold uppercase tracking-wider text-[#8B8794]">New password</label>
+        <input id="reset-password" name="new_password" type="password" placeholder="New password"
+          class="w-full px-4 py-3.5 bg-[#F5F6FB] rounded-2xl text-xs font-medium text-[#2D2B3D] placeholder-[#B8B4C4] focus:outline-none transition-all shadow-[inset_4px_4px_8px_#d8d4dd,inset_-4px_-4px_8px_#ffffff] focus:shadow-[inset_6px_6px_12px_#c8c9d1,inset_-6px_-6px_12px_#ffffff]"/>
+      </div>
+      <button type="submit" class="w-full bg-[#6C63FF] text-white font-bold text-xs uppercase tracking-widest py-4 rounded-2xl transition-all shadow-[6px_6px_14px_#c8c9d1,-6px_-6px_14px_#ffffff] hover:shadow-[4px_4px_10px_#c8c9d1,-4px_-4px_10px_#ffffff] active:shadow-[inset_4px_4px_8px_#5248d9,inset_-4px_-4px_8px_#867eff]">
+        Reset password
+      </button>
+    </form>
+  </div>
+
+  <div id="step-success" class="hidden bg-[#F5F6FB] rounded-[32px] p-8 text-center shadow-[10px_10px_24px_#c8c9d1,-10px_-10px_24px_#ffffff]">
+    <div class="w-14 h-14 rounded-2xl bg-[#10B981] flex items-center justify-center text-white mx-auto mb-4 shadow-[4px_4px_10px_#c8c9d1,-4px_-4px_10px_#ffffff]">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+      </svg>
+    </div>
+    <h2 class="text-sm font-bold uppercase tracking-widest text-[#2D2B3D] mb-2">Password reset</h2>
+    <p class="text-xs text-[#8B8794] font-light mb-6">You can now sign in with your new password.</p>
+    <a href="/app/login.html" class="block w-full bg-[#6C63FF] text-white font-bold text-xs uppercase tracking-widest py-4 rounded-2xl transition-all shadow-[6px_6px_14px_#c8c9d1,-6px_-6px_14px_#ffffff] hover:shadow-[4px_4px_10px_#c8c9d1,-4px_-4px_10px_#ffffff] active:shadow-[inset_4px_4px_8px_#5248d9,inset_-4px_-4px_8px_#867eff]">
+      Sign in
+    </a>
+  </div>
+</div>
+
+<script src="/app/js/auth.js"></script>
+<script>
+  let resetIdentifier = "";
+
+  function showError(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = Array.isArray(msg) ? msg.map(e => e.msg).join("; ") : msg;
+    el.classList.remove("hidden");
+  }
+
+  function prepareForgotRequest(event) {
+    resetIdentifier = document.getElementById("forgot-identifier").value.trim();
+    document.getElementById("phone-error").classList.add("hidden");
+  }
+
+  function handleForgotResponse(event) {
+    const data = JSON.parse(event.detail.xhr.responseText || "{}");
+    if (event.detail.xhr.status >= 400) {
+      showError("phone-error", data.detail || "Unable to send reset OTP");
+      return;
+    }
+    document.getElementById("step-phone").classList.add("hidden");
+    document.getElementById("step-reset").classList.remove("hidden");
+  }
+
+  function prepareResetRequest(event) {
+    document.getElementById("reset-error").classList.add("hidden");
+    event.detail.parameters.identifier = resetIdentifier;
+    event.detail.parameters.otp_code = document.getElementById("reset-otp").value.trim();
+    event.detail.parameters.new_password = document.getElementById("reset-password").value;
+  }
+
+  function handleResetResponse(event) {
+    const data = JSON.parse(event.detail.xhr.responseText || "{}");
+    if (event.detail.xhr.status >= 400) {
+      showError("reset-error", data.detail || "Password reset failed");
+      return;
+    }
+    document.getElementById("step-reset").classList.add("hidden");
+    document.getElementById("step-success").classList.remove("hidden");
+  }
+</script>
+</body>
+</html>

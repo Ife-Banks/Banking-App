@@ -1,0 +1,503 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="icon" type="image/svg+xml" href="/app/favicon.svg"/>
+  <title>SmartBank — Admin</title>
+<link rel="stylesheet" href="/app/js/tailwind.css"/>
+  <script src="/app/js/htmx.js"></script>
+  <script src="/app/js/json-enc.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+    * { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="min-h-screen bg-[#E8EAF3] text-[#2D2B3D] antialiased">
+
+<nav class="bg-[#F5F6FB] border-b border-[#E0DFE8] px-6 py-4 flex justify-between items-center shadow-[0_4px_12px_#d0d1da]">
+  <div class="flex items-center gap-3">
+    <div class="w-9 h-9 rounded-xl bg-[#6C63FF] flex items-center justify-center text-white text-xs font-black shadow-[3px_3px_6px_#c8c9d1,-3px_-3px_6px_#ffffff]">SB</div>
+    <h1 class="text-lg font-black tracking-tight text-[#2D2B3D]">SmartBank <span class="text-[#8B8794] font-normal text-xs ml-1">Admin</span></h1>
+  </div>
+  <div class="flex items-center gap-4">
+    <span id="admin-email" class="text-xs text-[#8B8794] hidden sm:inline"></span>
+    <button onclick="logout()" class="text-xs font-bold uppercase tracking-wider text-[#8B8794] hover:text-[#E05050] transition-colors">Sign out</button>
+  </div>
+</nav>
+
+<main class="max-w-6xl mx-auto p-6 space-y-6">
+
+  <div id="global-alert" class="hidden p-4 rounded-2xl text-sm font-medium shadow-[inset_3px_3px_6px_#d8d4dd,inset_-3px_-3px_6px_#ffffff]"></div>
+
+  <!-- Stats -->
+  <div id="stats-row" class="grid grid-cols-2 md:grid-cols-5 gap-4">
+    <div class="col-span-full text-sm text-[#8B8794] text-center py-4">Loading stats...</div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="flex flex-wrap gap-2">
+    <button type="button" onclick="switchTab('users')" id="tab-users"
+      class="tab-btn px-5 py-3 text-xs font-bold uppercase tracking-wider text-white bg-[#6C63FF] rounded-2xl shadow-[4px_4px_8px_#c8c9d1,-4px_-4px_8px_#ffffff] active:shadow-[inset_3px_3px_6px_#5248d9,inset_-3px_-3px_6px_#867eff]">Users</button>
+    <button type="button" onclick="switchTab('transactions')" id="tab-transactions"
+      class="tab-btn px-5 py-3 text-xs font-bold uppercase tracking-wider text-[#8B8794] bg-[#F5F6FB] rounded-2xl shadow-[4px_4px_8px_#c8c9d1,-4px_-4px_8px_#ffffff] hover:shadow-[2px_2px_5px_#c8c9d1,-2px_-2px_5px_#ffffff] active:shadow-[inset_3px_3px_6px_#d8d4dd,inset_-3px_-3px_6px_#ffffff]">Transactions</button>
+    <button type="button" onclick="switchTab('audit')" id="tab-audit"
+      class="tab-btn px-5 py-3 text-xs font-bold uppercase tracking-wider text-[#8B8794] bg-[#F5F6FB] rounded-2xl shadow-[4px_4px_8px_#c8c9d1,-4px_-4px_8px_#ffffff] hover:shadow-[2px_2px_5px_#c8c9d1,-2px_-2px_5px_#ffffff] active:shadow-[inset_3px_3px_6px_#d8d4dd,inset_-3px_-3px_6px_#ffffff]">Audit logs</button>
+    <button type="button" onclick="switchTab('freeze')" id="tab-freeze"
+      class="tab-btn px-5 py-3 text-xs font-bold uppercase tracking-wider text-[#8B8794] bg-[#F5F6FB] rounded-2xl shadow-[4px_4px_8px_#c8c9d1,-4px_-4px_8px_#ffffff] hover:shadow-[2px_2px_5px_#c8c9d1,-2px_-2px_5px_#ffffff] active:shadow-[inset_3px_3px_6px_#d8d4dd,inset_-3px_-3px_6px_#ffffff]">Freeze account</button>
+  </div>
+
+  <!-- Users -->
+  <section id="panel-users">
+    <div class="bg-[#F5F6FB] rounded-[32px] shadow-[10px_10px_24px_#c8c9d1,-10px_-10px_24px_#ffffff] overflow-hidden">
+      <div class="px-6 py-5 border-b border-[#E0DFE8] flex flex-wrap gap-3 items-center justify-between">
+        <h2 class="text-xs font-bold uppercase tracking-widest text-[#6C63FF]">All users</h2>
+        <div class="flex gap-2">
+          <input id="user-search" type="search" placeholder="Search name, email, phone..."
+            class="text-xs bg-[#EEEFF5] border-0 rounded-2xl px-4 py-2 w-56 focus:outline-none transition-all shadow-[inset_3px_3px_6px_#d8d4dd,inset_-3px_-3px_6px_#ffffff] focus:shadow-[inset_5px_5px_10px_#c8c9d1,inset_-5px_-5px_10px_#ffffff] placeholder-[#B8B4C4]"
+            oninput="filterUsers()"/>
+          <button type="button" onclick="loadUsers()" class="text-xs font-bold text-[#6C63FF] hover:underline px-2 py-2 rounded-xl bg-[#F5F6FB] shadow-[3px_3px_6px_#c8c9d1,-3px_-3px_6px_#ffffff] active:shadow-[inset_2px_2px_4px_#d8d4dd,inset_-2px_-2px_4px_#ffffff]">Refresh</button>
+        </div>
+      </div>
+      <div id="users-list" class="divide-y divide-[#E0DFE8]">
+        <div class="px-6 py-6 text-xs text-[#8B8794] text-center">Loading...</div>
+      </div>
+      <div class="px-6 py-3 border-t border-[#E0DFE8] flex justify-between items-center text-xs text-[#8B8794]">
+        <span id="users-paging-info"></span>
+        <div class="flex gap-2">
+          <button type="button" id="users-prev" onclick="changeUsersPage(-1)" class="px-3 py-1.5 rounded-xl bg-[#F5F6FB] shadow-[3px_3px_6px_#c8c9d1,-3px_-3px_6px_#ffffff] disabled:opacity-40 disabled:shadow-none" disabled>Prev</button>
+          <button type="button" id="users-next" onclick="changeUsersPage(1)" class="px-3 py-1.5 rounded-xl bg-[#F5F6FB] shadow-[3px_3px_6px_#c8c9d1,-3px_-3px_6px_#ffffff] disabled:opacity-40 disabled:shadow-none" disabled>Next</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Transactions -->
+  <section id="panel-transactions" class="hidden">
+    <div class="bg-[#F5F6FB] rounded-[32px] shadow-[10px_10px_24px_#c8c9d1,-10px_-10px_24px_#ffffff] overflow-hidden">
+      <div class="px-6 py-5 border-b border-[#E0DFE8] flex gap-2 items-center">
+        <h2 class="text-xs font-bold uppercase tracking-widest text-[#6C63FF] flex-1">Transactions</h2>
+        <select id="txn-filter" onchange="loadTransactions()"
+          class="text-xs bg-[#EEEFF5] border-0 rounded-2xl px-4 py-2 focus:outline-none shadow-[inset_3px_3px_6px_#d8d4dd,inset_-3px_-3px_6px_#ffffff]">
+          <option value="">All statuses</option>
+          <option value="successful">Successful</option>
+          <option value="pending">Pending</option>
+          <option value="failed">Failed</option>
+          <option value="reversed">Reversed</option>
+        </select>
+        <button type="button" onclick="loadTransactions()" class="text-xs font-bold text-[#6C63FF] hover:underline px-2 py-2 rounded-xl bg-[#F5F6FB] shadow-[3px_3px_6px_#c8c9d1,-3px_-3px_6px_#ffffff] active:shadow-[inset_2px_2px_4px_#d8d4dd,inset_-2px_-2px_4px_#ffffff]">Refresh</button>
+      </div>
+      <div id="transactions-list" class="divide-y divide-[#E0DFE8]"></div>
+    </div>
+  </section>
+
+  <!-- Audit -->
+  <section id="panel-audit" class="hidden">
+    <div class="bg-[#F5F6FB] rounded-[32px] shadow-[10px_10px_24px_#c8c9d1,-10px_-10px_24px_#ffffff] overflow-hidden">
+      <div class="px-6 py-5 border-b border-[#E0DFE8] flex flex-wrap gap-2 items-center">
+        <h2 class="text-xs font-bold uppercase tracking-widest text-[#6C63FF] flex-1">Audit logs</h2>
+        <input id="audit-action" type="text" placeholder="Filter by action"
+          class="text-xs bg-[#EEEFF5] border-0 rounded-2xl px-4 py-2 w-40 focus:outline-none shadow-[inset_3px_3px_6px_#d8d4dd,inset_-3px_-3px_6px_#ffffff] placeholder-[#B8B4C4]"/>
+        <input id="audit-user-id" type="text" placeholder="User ID"
+          class="text-xs bg-[#EEEFF5] border-0 rounded-2xl px-4 py-2 w-48 focus:outline-none shadow-[inset_3px_3px_6px_#d8d4dd,inset_-3px_-3px_6px_#ffffff] placeholder-[#B8B4C4]"/>
+        <button type="button" onclick="loadAuditLogs()" class="text-xs font-bold px-3 py-2 rounded-xl bg-[#F5F6FB] shadow-[3px_3px_6px_#c8c9d1,-3px_-3px_6px_#ffffff] active:shadow-[inset_2px_2px_4px_#d8d4dd,inset_-2px_-2px_4px_#ffffff]">Apply</button>
+      </div>
+      <div id="audit-list" class="divide-y divide-[#E0DFE8]"></div>
+    </div>
+  </section>
+
+  <!-- Freeze -->
+  <section id="panel-freeze" class="hidden">
+    <div class="bg-[#F5F6FB] rounded-[32px] p-8 max-w-md shadow-[10px_10px_24px_#c8c9d1,-10px_-10px_24px_#ffffff]">
+      <h2 class="text-xs font-bold uppercase tracking-widest text-[#6C63FF] mb-2">Freeze / unfreeze account</h2>
+      <p class="text-[11px] text-[#8B8794] font-light mb-6">Enter a 10-digit account number (starts with 30). You can also open a user profile and use quick actions.</p>
+      <div id="freeze-msg" class="hidden mb-4 p-4 rounded-2xl text-xs font-medium shadow-[inset_3px_3px_6px_#d8d4dd,inset_-3px_-3px_6px_#ffffff]"></div>
+      <form id="freeze-form" class="space-y-4" onsubmit="return false">
+        <div class="space-y-1.5">
+          <label class="block text-[10px] font-bold uppercase tracking-wider text-[#8B8794]">Account number</label>
+          <input id="freeze-account" name="account_number" type="text" placeholder="30XXXXXXXX"
+            class="w-full px-4 py-3.5 bg-[#F5F6FB] rounded-2xl text-xs font-medium text-[#2D2B3D] placeholder-[#B8B4C4] focus:outline-none transition-all shadow-[inset_4px_4px_8px_#d8d4dd,inset_-4px_-4px_8px_#ffffff] focus:shadow-[inset_6px_6px_12px_#c8c9d1,inset_-6px_-6px_12px_#ffffff]"/>
+        </div>
+        <div class="space-y-1.5">
+          <label class="block text-[10px] font-bold uppercase tracking-wider text-[#8B8794]">Reason <span class="text-[#B8B4C4] font-light">(optional)</span></label>
+          <input id="freeze-reason" name="reason" type="text" placeholder="e.g. Suspicious activity"
+            class="w-full px-4 py-3.5 bg-[#F5F6FB] rounded-2xl text-xs font-medium text-[#2D2B3D] placeholder-[#B8B4C4] focus:outline-none transition-all shadow-[inset_4px_4px_8px_#d8d4dd,inset_-4px_-4px_8px_#ffffff] focus:shadow-[inset_6px_6px_12px_#c8c9d1,inset_-6px_-6px_12px_#ffffff]"/>
+        </div>
+        <div class="flex gap-3">
+          <button type="button" onclick="submitFreeze(true)"
+            class="flex-1 bg-[#E05050] hover:bg-[#CC4040] text-white text-xs font-bold uppercase tracking-widest py-3.5 rounded-2xl shadow-[4px_4px_8px_#c8c9d1,-4px_-4px_8px_#ffffff] active:shadow-[inset_3px_3px_6px_#b03030,inset_-3px_-3px_6px_#f06060]">Freeze</button>
+          <button type="button" onclick="submitFreeze(false)"
+            class="flex-1 bg-[#10B981] hover:bg-[#0DA271] text-white text-xs font-bold uppercase tracking-widest py-3.5 rounded-2xl shadow-[4px_4px_8px_#c8c9d1,-4px_-4px_8px_#ffffff] active:shadow-[inset_3px_3px_6px_#0b8d5c,inset_-3px_-3px_6px_#34d399]">Unfreeze</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+</main>
+
+<!-- User detail modal -->
+<div id="user-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#2D2B3D]/60">
+  <div class="bg-[#F5F6FB] rounded-[32px] shadow-[15px_15px_30px_#a09eab,-15px_-15px_30px_#ffffff] max-w-lg w-full max-h-[90vh] overflow-y-auto">
+    <div class="px-6 py-4 border-b border-[#E0DFE8] flex justify-between items-center">
+      <h3 class="text-xs font-bold uppercase tracking-widest text-[#6C63FF]">User details</h3>
+      <button type="button" onclick="closeUserModal()" class="w-7 h-7 rounded-xl bg-[#F5F6FB] flex items-center justify-center text-[#8B8794] hover:text-[#E05050] shadow-[2px_2px_5px_#c8c9d1,-2px_-2px_5px_#ffffff] active:shadow-[inset_2px_2px_4px_#d8d4dd,inset_-2px_-2px_4px_#ffffff]">&times;</button>
+    </div>
+    <div id="user-modal-body" class="px-6 py-5 space-y-4 text-sm"></div>
+    <div id="user-modal-actions" class="px-6 py-4 border-t border-[#E0DFE8] flex flex-wrap gap-2"></div>
+  </div>
+</div>
+
+<!-- Transaction detail modal -->
+<div id="txn-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#2D2B3D]/60">
+  <div class="bg-[#F5F6FB] rounded-[32px] shadow-[15px_15px_30px_#a09eab,-15px_-15px_30px_#ffffff] max-w-md w-full">
+    <div class="px-6 py-4 border-b border-[#E0DFE8] flex justify-between items-center">
+      <h3 class="text-xs font-bold uppercase tracking-widest text-[#6C63FF]">Transaction</h3>
+      <button type="button" onclick="closeTxnModal()" class="w-7 h-7 rounded-xl bg-[#F5F6FB] flex items-center justify-center text-[#8B8794] hover:text-[#E05050] shadow-[2px_2px_5px_#c8c9d1,-2px_-2px_5px_#ffffff] active:shadow-[inset_2px_2px_4px_#d8d4dd,inset_-2px_-2px_4px_#ffffff]">&times;</button>
+    </div>
+    <div id="txn-modal-body" class="px-6 py-5 text-sm space-y-2"></div>
+  </div>
+</div>
+
+<script src="/app/js/auth.js"></script>
+<script>
+  requireAdmin();
+
+  const PAGE_SIZE = 20;
+  let usersOffset = 0;
+  let usersTotal = 0;
+  let allUsers = [];
+  let selectedUser = null;
+
+  const user = getStoredUser();
+  if (user?.email) {
+    document.getElementById("admin-email").textContent = user.email;
+    document.getElementById("admin-email").classList.remove("hidden");
+  }
+
+  function showAlert(msg, ok) {
+    if (ok === undefined) ok = true;
+    const el = document.getElementById("global-alert");
+    el.textContent = msg;
+    el.className = "p-4 rounded-2xl text-sm font-medium shadow-[inset_3px_3px_6px_#d8d4dd,inset_-3px_-3px_6px_#ffffff] " + (ok
+      ? "bg-[#D1FAE5] text-[#065F46]"
+      : "bg-[#FEE2E2] text-[#991B1B]");
+    el.classList.remove("hidden");
+    setTimeout(function () { el.classList.add("hidden"); }, 5000);
+  }
+
+  function switchTab(name) {
+    var tabs = ["users", "transactions", "audit", "freeze"];
+    for (var i = 0; i < tabs.length; i++) {
+      var t = tabs[i];
+      document.getElementById("panel-" + t).classList.toggle("hidden", t !== name);
+      var btn = document.getElementById("tab-" + t);
+      btn.classList.toggle("bg-[#6C63FF]", t === name);
+      btn.classList.toggle("text-white", t === name);
+      btn.classList.toggle("bg-[#F5F6FB]", t !== name);
+      btn.classList.toggle("text-[#8B8794]", t !== name);
+    }
+    if (name === "transactions" && !document.getElementById("transactions-list").innerHTML) loadTransactions();
+    if (name === "audit" && !document.getElementById("audit-list").innerHTML) loadAuditLogs();
+  }
+
+  function statusBadge(status) {
+    var colors = {
+      active: "bg-[#D1FAE5] text-[#065F46]",
+      frozen: "bg-[#FEE2E2] text-[#991B1B]",
+      suspended: "bg-[#FEF3C7] text-[#92400E]",
+      closed: "bg-[#E5E7EB] text-[#4B5563]",
+      successful: "bg-[#D1FAE5] text-[#065F46]",
+      pending: "bg-[#FEF3C7] text-[#92400E]",
+      failed: "bg-[#FEE2E2] text-[#991B1B]",
+      reversed: "bg-[#E5E7EB] text-[#4B5563]",
+    };
+    var c = colors[status] || "bg-[#E5E7EB] text-[#4B5563]";
+    return '<span class="text-xs px-2.5 py-0.5 rounded-xl font-bold uppercase tracking-wider ' + c + '">' + status + "</span>";
+  }
+
+  async function loadStats() {
+    var res = await apiFetch("/admin/stats");
+    if (!res || !res.ok) return;
+    var d = await res.json();
+    var stats = [
+      { label: "Total users", value: d.total_users },
+      { label: "Verified", value: d.verified_users },
+      { label: "Frozen", value: d.frozen_accounts },
+      { label: "Successful txns", value: d.successful_transactions },
+      { label: "Volume (NGN)", value: "\u20A6" + Number(d.total_volume_ngn).toLocaleString("en-NG") },
+    ];
+    document.getElementById("stats-row").innerHTML = stats.map(function (s) {
+      return '<div class="bg-[#F5F6FB] rounded-[24px] p-6 shadow-[6px_6px_14px_#c8c9d1,-6px_-6px_14px_#ffffff]">'
+        + '<p class="text-[10px] font-bold uppercase tracking-widest text-[#8B8794] mb-2">' + s.label + '</p>'
+        + '<p class="text-2xl font-bold text-[#2D2B3D]">' + s.value + '</p>'
+        + "</div>";
+    }).join("");
+  }
+
+  async function loadUsers() {
+    var list = document.getElementById("users-list");
+    list.innerHTML = '<div class="px-6 py-6 text-xs text-[#8B8794] text-center">Loading...</div>';
+    var res = await apiFetch("/admin/users?limit=" + PAGE_SIZE + "&offset=" + usersOffset);
+    if (!res) return;
+    var data = await res.json();
+    if (!res.ok) {
+      list.innerHTML = '<div class="px-6 py-6 text-xs text-[#E05050] text-center">' + formatApiError(data, "Failed to load users") + "</div>";
+      return;
+    }
+    usersTotal = data.total;
+    allUsers = data.users || [];
+    document.getElementById("users-paging-info").textContent = "Showing " + (usersOffset + 1) + "&#x2013;" + Math.min(usersOffset + PAGE_SIZE, usersTotal) + " of " + usersTotal;
+    document.getElementById("users-prev").disabled = usersOffset === 0;
+    document.getElementById("users-next").disabled = usersOffset + PAGE_SIZE >= usersTotal;
+    filterUsers();
+  }
+
+  function changeUsersPage(delta) {
+    usersOffset = Math.max(0, usersOffset + delta * PAGE_SIZE);
+    loadUsers();
+  }
+
+  function filterUsers() {
+    var q = document.getElementById("user-search").value.trim().toLowerCase();
+    var list = document.getElementById("users-list");
+    var filtered = q
+      ? allUsers.filter(function (u) {
+          var vals = [u.full_name, u.email, u.phone_number, u.account ? u.account.account_number : null];
+          return vals.filter(Boolean).some(function (v) { return String(v).toLowerCase().includes(q); });
+        })
+      : allUsers;
+
+    if (!filtered.length) {
+      list.innerHTML = '<div class="px-6 py-6 text-xs text-[#8B8794] text-center">No users found</div>';
+      return;
+    }
+
+    list.innerHTML = filtered.map(function (u) {
+      var acct = u.account ? u.account.account_number || "—" : "—";
+      var isAdmin = u.email ? u.email.endsWith("@smartbank.admin") : false;
+      var isClosed = u.account_status === "closed";
+      var adminTag = isAdmin ? ' <span class="text-[10px] text-[#6C63FF]">(admin)</span>' : "";
+      return '<button type="button" onclick="openUserById(\'' + u.id + '\')"'
+        + ' class="w-full px-6 py-5 flex justify-between items-center hover:bg-[#EEEFF5] text-left transition-colors">'
+        + '<div class="min-w-0 flex-1">'
+        + '<p class="text-xs font-bold text-[#2D2B3D] truncate">' + u.full_name + adminTag + "</p>"
+        + '<p class="text-[11px] text-[#8B8794] mt-0.5 truncate">' + u.phone_number + " \u00B7 " + u.email + "</p>"
+        + '<p class="text-[11px] text-[#8B8794] mt-0.5">Acct: ' + acct + " \u00B7 " + u.kyc_tier + (isClosed ? " \u00B7 closed" : "") + "</p>"
+        + "</div>"
+        + '<div class="ml-3 shrink-0">' + statusBadge(u.account_status) + "</div>"
+        + "</button>";
+    }).join("");
+  }
+
+  function openUserById(userId) {
+    var u = allUsers.find(function (x) { return x.id === userId; });
+    if (u) openUserModal(u);
+  }
+
+  function openUserModal(u) {
+    selectedUser = u;
+    var bal = u.account ? "\u20A6" + Number(u.account.available_balance).toLocaleString("en-NG", { minimumFractionDigits: 2 }) : "—";
+    document.getElementById("user-modal-body").innerHTML = ""
+      + '<div class="grid grid-cols-2 gap-3">'
+      + '<div><p class="text-[#8B8794] text-[11px]">Name</p><p class="font-semibold text-[#2D2B3D] text-xs">' + u.full_name + "</p></div>"
+      + '<div><p class="text-[#8B8794] text-[11px]">Status</p><p>' + statusBadge(u.account_status) + "</p></div>"
+      + '<div class="col-span-2"><p class="text-[#8B8794] text-[11px]">Email</p><p class="font-medium text-xs break-all">' + u.email + "</p></div>"
+      + '<div><p class="text-[#8B8794] text-[11px]">Phone</p><p class="font-medium text-xs">' + u.phone_number + "</p></div>"
+      + '<div><p class="text-[#8B8794] text-[11px]">KYC</p><p class="font-medium text-xs">' + u.kyc_tier + "</p></div>"
+      + '<div><p class="text-[#8B8794] text-[11px]">Account #</p><p class="font-medium font-mono text-xs">' + (u.account ? u.account.account_number || "—" : "—") + "</p></div>"
+      + '<div><p class="text-[#8B8794] text-[11px]">Balance</p><p class="font-medium text-xs">' + bal + "</p></div>"
+      + '<div class="col-span-2"><p class="text-[#8B8794] text-[11px]">User ID</p><p class="font-mono text-[10px] break-all">' + u.id + "</p></div>"
+      + '<div><p class="text-[#8B8794] text-[11px]">Verified</p><p class="text-xs">' + (u.phone_verified ? "Yes" : "No") + "</p></div>"
+      + '<div><p class="text-[#8B8794] text-[11px]">NIN verified</p><p class="text-xs">' + (u.nin_verified ? "Yes" : "No") + "</p></div>"
+      + "</div>";
+
+    var isAdmin = u.email ? u.email.endsWith("@smartbank.admin") : false;
+    var isClosed = u.account_status === "closed";
+    var acctNum = u.account ? u.account.account_number || "" : "";
+    var actions = "";
+
+    if (!isAdmin && !isClosed && acctNum) {
+      if (u.account_status === "frozen") {
+        actions += '<button type="button" onclick="quickUnfreeze(\'' + acctNum + '\')" class="text-xs bg-[#10B981] text-white font-bold uppercase tracking-wider px-3 py-2 rounded-xl shadow-[3px_3px_6px_#c8c9d1,-3px_-3px_6px_#ffffff] active:shadow-[inset_2px_2px_4px_#d8d4dd,inset_-2px_-2px_4px_#ffffff]">Unfreeze</button>';
+      } else {
+        actions += '<button type="button" onclick="quickFreeze(\'' + acctNum + '\')" class="text-xs bg-[#E05050] text-white font-bold uppercase tracking-wider px-3 py-2 rounded-xl shadow-[3px_3px_6px_#c8c9d1,-3px_-3px_6px_#ffffff] active:shadow-[inset_2px_2px_4px_#d8d4dd,inset_-2px_-2px_4px_#ffffff]">Freeze</button>';
+      }
+      actions += '<button type="button" onclick="deleteUser(\'' + u.id + '\')" class="text-xs bg-[#2D2B3D] text-white font-bold uppercase tracking-wider px-3 py-2 rounded-xl shadow-[3px_3px_6px_#c8c9d1,-3px_-3px_6px_#ffffff] active:shadow-[inset_2px_2px_4px_#d8d4dd,inset_-2px_-2px_4px_#ffffff]">Delete account</button>';
+    } else if (isClosed) {
+      actions = '<p class="text-xs text-[#8B8794]">This account has been closed.</p>';
+    } else if (isAdmin) {
+      actions = '<p class="text-xs text-[#8B8794]">Admin accounts cannot be modified here.</p>';
+    }
+
+    actions += '<button type="button" onclick="prefillFreeze(\'' + acctNum + '\')" class="text-xs border border-[#E0DFE8] px-3 py-2 rounded-xl bg-[#F5F6FB] shadow-[2px_2px_5px_#c8c9d1,-2px_-2px_5px_#ffffff] active:shadow-[inset_2px_2px_4px_#d8d4dd,inset_-2px_-2px_4px_#ffffff]">Open freeze form</button>';
+    document.getElementById("user-modal-actions").innerHTML = actions;
+    document.getElementById("user-modal").classList.remove("hidden");
+  }
+
+  function closeUserModal() {
+    document.getElementById("user-modal").classList.add("hidden");
+    selectedUser = null;
+  }
+
+  function prefillFreeze(acctNum) {
+    closeUserModal();
+    switchTab("freeze");
+    document.getElementById("freeze-account").value = acctNum;
+  }
+
+  async function quickFreeze(acctNum) {
+    var reason = prompt("Reason for freeze (optional):") || "";
+    await submitFreezeRequest(true, acctNum, reason);
+  }
+
+  async function quickUnfreeze(acctNum) {
+    await submitFreezeRequest(false, acctNum, "");
+  }
+
+  async function submitFreeze(freeze) {
+    var acctNum = document.getElementById("freeze-account").value.trim();
+    var reason = document.getElementById("freeze-reason").value.trim();
+    await submitFreezeRequest(freeze, acctNum, reason);
+  }
+
+  async function submitFreezeRequest(freeze, acctNum, reason) {
+    if (!acctNum) {
+      showAlert("Account number is required", false);
+      return;
+    }
+    var path = freeze ? "/admin/freeze-account" : "/admin/unfreeze-account";
+    var body = { account_number: acctNum };
+    if (freeze && reason) body.reason = reason;
+
+    var res = await apiFetch(path, { method: "POST", body: JSON.stringify(body) });
+    if (!res) return;
+    var data = await res.json();
+    var msgEl = document.getElementById("freeze-msg");
+    var ok = res.ok;
+    msgEl.textContent = ok ? (data.message || "Done") : formatApiError(data, "Request failed");
+    msgEl.className = "mb-4 p-4 rounded-2xl text-xs font-medium shadow-[inset_3px_3px_6px_#d8d4dd,inset_-3px_-3px_6px_#ffffff] " + (ok ? "bg-[#D1FAE5] text-[#065F46]" : "bg-[#FEE2E2] text-[#991B1B]");
+    msgEl.classList.remove("hidden");
+    showAlert(msgEl.textContent, ok);
+    if (ok) {
+      loadStats();
+      loadUsers();
+      if (selectedUser) closeUserModal();
+    }
+  }
+
+  async function deleteUser(userId) {
+    var reason = prompt("Reason for deleting this account (optional):") || "";
+    if (!confirm("Close this user account? They will not be able to sign in again. Balances must be zero.")) return;
+
+    var res = await apiFetch("/admin/users/" + userId + "/delete", {
+      method: "POST",
+      body: JSON.stringify({ reason: reason }),
+    });
+    if (!res) return;
+    var data = await res.json();
+    if (!res.ok) {
+      showAlert(formatApiError(data, "Delete failed"), false);
+      return;
+    }
+    showAlert(data.message || "User deleted");
+    closeUserModal();
+    loadStats();
+    loadUsers();
+  }
+
+  async function loadTransactions() {
+    var list = document.getElementById("transactions-list");
+    list.innerHTML = '<div class="px-5 py-6 text-sm text-[#8B8794] text-center">Loading...</div>';
+    var status = document.getElementById("txn-filter").value;
+    var url = status ? "/admin/transactions?limit=50&status=" + encodeURIComponent(status) : "/admin/transactions?limit=50";
+    var res = await apiFetch(url);
+    if (!res) return;
+    var data = await res.json();
+    if (!res.ok) {
+      list.innerHTML = '<div class="px-5 py-6 text-xs text-[#E05050] text-center">Failed to load</div>';
+      return;
+    }
+    if (!data.transactions || !data.transactions.length) {
+      list.innerHTML = '<div class="px-5 py-6 text-xs text-[#8B8794] text-center">No transactions</div>';
+      return;
+    }
+    list.innerHTML = data.transactions.map(function (t) {
+      return '<button type="button" onclick="openTxnModal(\'' + t.reference + '\')"'
+        + ' class="w-full px-5 py-4 flex justify-between items-center hover:bg-[#EEEFF5] text-left">'
+        + '<div>'
+        + '<p class="text-xs font-bold text-[#2D2B3D] font-mono">' + t.reference + "</p>"
+        + '<p class="text-[10px] text-[#8B8794] mt-0.5">' + (t.narration || "Transfer") + " \u00B7 " + new Date(t.created_at).toLocaleString("en-NG") + "</p>"
+        + "</div>"
+        + '<div class="text-right">'
+        + '<p class="text-xs font-bold">\u20A6' + Number(t.amount).toLocaleString("en-NG", { minimumFractionDigits: 2 }) + "</p>"
+        + statusBadge(t.status)
+        + "</div>"
+        + "</button>";
+    }).join("");
+  }
+
+  async function openTxnModal(reference) {
+    var res = await apiFetch("/admin/transactions/" + encodeURIComponent(reference));
+    if (!res || !res.ok) {
+      showAlert("Could not load transaction", false);
+      return;
+    }
+    var t = await res.json();
+    document.getElementById("txn-modal-body").innerHTML = ""
+      + '<p class="text-xs"><span class="text-[#8B8794]">Reference:</span> <span class="font-mono">' + t.reference + "</span></p>"
+      + '<p class="text-xs"><span class="text-[#8B8794]">Amount:</span> \u20A6' + Number(t.amount).toLocaleString("en-NG", { minimumFractionDigits: 2 }) + "</p>"
+      + '<p class="text-xs"><span class="text-[#8B8794]">Status:</span> ' + statusBadge(t.status) + "</p>"
+      + '<p class="text-xs"><span class="text-[#8B8794]">Narration:</span> ' + (t.narration || "—") + "</p>"
+      + '<p class="text-xs"><span class="text-[#8B8794]">Created:</span> ' + new Date(t.created_at).toLocaleString("en-NG") + "</p>"
+      + '<p class="text-xs"><span class="text-[#8B8794]">ID:</span> <span class="font-mono text-[10px]">' + t.id + "</span></p>";
+    document.getElementById("txn-modal").classList.remove("hidden");
+  }
+
+  function closeTxnModal() {
+    document.getElementById("txn-modal").classList.add("hidden");
+  }
+
+  async function loadAuditLogs() {
+    var list = document.getElementById("audit-list");
+    list.innerHTML = '<div class="px-5 py-6 text-xs text-[#8B8794] text-center">Loading...</div>';
+    var action = document.getElementById("audit-action").value.trim();
+    var userId = document.getElementById("audit-user-id").value.trim();
+    var params = "limit=50&offset=0";
+    if (action) params += "&action=" + encodeURIComponent(action);
+    if (userId) params += "&user_id=" + encodeURIComponent(userId);
+
+    var res = await apiFetch("/admin/audit-logs?" + params);
+    if (!res) return;
+    var data = await res.json();
+    if (!res.ok) {
+      list.innerHTML = '<div class="px-5 py-6 text-xs text-[#E05050] text-center">Failed to load</div>';
+      return;
+    }
+    if (!data.logs || !data.logs.length) {
+      list.innerHTML = '<div class="px-5 py-6 text-xs text-[#8B8794] text-center">No audit logs</div>';
+      return;
+    }
+    list.innerHTML = data.logs.map(function (l) {
+      return '<div class="px-5 py-4 flex justify-between items-start gap-4">'
+        + '<div class="min-w-0">'
+        + '<p class="text-xs font-bold text-[#2D2B3D]">' + l.action + "</p>"
+        + '<p class="text-[10px] text-[#8B8794] mt-0.5">' + (l.ip_address || "—") + " \u00B7 " + new Date(l.created_at).toLocaleString("en-NG") + "</p>"
+        + (l.user_id ? '<p class="text-[10px] text-[#8B8794] font-mono truncate">User: ' + l.user_id + "</p>" : "")
+        + "</div>"
+        + '<p class="text-[10px] text-[#8B8794] max-w-xs text-right break-all">' + JSON.stringify(l.meta_data || {}) + "</p>"
+        + "</div>";
+    }).join("");
+  }
+
+  document.getElementById("user-modal").addEventListener("click", function (e) {
+    if (e.target.id === "user-modal") closeUserModal();
+  });
+  document.getElementById("txn-modal").addEventListener("click", function (e) {
+    if (e.target.id === "txn-modal") closeTxnModal();
+  });
+
+  loadStats();
+  loadUsers();
+</script>
+</body>
+</html>

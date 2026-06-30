@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="icon" type="image/svg+xml" href="/app/favicon.svg"/>
+  <title>SmartBank — Login</title>
+  <link rel="stylesheet" href="/app/js/tailwind.css"/>
+  <script src="/app/js/htmx.js"></script>
+  <script src="/app/js/json-enc.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+    * { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="min-h-screen bg-[#E8EAF3] text-[#2D2B3D] antialiased flex items-center justify-center p-6">
+
+<div class="w-full max-w-md space-y-7">
+  <div class="text-center">
+    <div class="inline-flex w-14 h-14 rounded-2xl bg-white items-center justify-center text-[#6C63FF] font-black text-lg tracking-widest shadow-[6px_6px_14px_#c8c9d1,-6px_-6px_14px_#ffffff]">
+      SB
+    </div>
+    <h1 class="text-2xl font-black tracking-tight text-[#2D2B3D] mt-4">SmartBank</h1>
+    <p class="text-xs font-medium text-[#8B8794] mt-1 tracking-wide">Secure Digital Gateway</p>
+  </div>
+
+  <div id="step-login" class="bg-[#F5F6FB] rounded-[32px] p-8 shadow-[10px_10px_24px_#c8c9d1,-10px_-10px_24px_#ffffff] transition-all duration-300">
+    <div class="mb-6">
+      <h2 class="text-xs font-bold uppercase tracking-widest text-[#6C63FF]">Sign In</h2>
+      <p class="text-[11px] text-[#8B8794] mt-1.5 font-light">Access your premium custody account tools.</p>
+    </div>
+    
+    <div id="login-error" class="hidden mb-5 p-4 bg-[#FFF0F0] rounded-2xl text-[#E05050] text-xs font-semibold tracking-wide shadow-[inset_3px_3px_6px_#d8d4dd,inset_-3px_-3px_6px_#ffffff]"></div>
+
+    <form class="space-y-5" hx-post="/auth/login" hx-ext="json-enc" hx-target="#login-error" hx-swap="none"
+      hx-on::config-request="prepareLoginRequest(event)"
+      hx-on::after-request="handleLoginResponse(event)">
+      
+      <div class="space-y-1.5">
+        <label class="block text-[10px] font-bold uppercase tracking-wider text-[#8B8794]">Phone or Email Address</label>
+        <input id="login-identifier" name="identifier" type="text" placeholder="name@example.com"
+          class="w-full px-4 py-3.5 bg-[#F5F6FB] rounded-2xl text-xs font-medium text-[#2D2B3D] placeholder-[#B8B4C4] focus:outline-none focus:border-[#6C63FF] transition-all shadow-[inset_4px_4px_8px_#d8d4dd,inset_-4px_-4px_8px_#ffffff] focus:shadow-[inset_6px_6px_12px_#c8c9d1,inset_-6px_-6px_12px_#ffffff]"/>
+      </div>
+      
+      <div class="space-y-1.5">
+        <label class="block text-[10px] font-bold uppercase tracking-wider text-[#8B8794]">Account Password</label>
+        <input id="login-password" name="password" type="password" placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;"
+          class="w-full px-4 py-3.5 bg-[#F5F6FB] rounded-2xl text-xs font-medium text-[#2D2B3D] placeholder-[#B8B4C4] focus:outline-none focus:border-[#6C63FF] transition-all shadow-[inset_4px_4px_8px_#d8d4dd,inset_-4px_-4px_8px_#ffffff] focus:shadow-[inset_6px_6px_12px_#c8c9d1,inset_-6px_-6px_12px_#ffffff]"/>
+      </div>
+
+      <button type="submit"
+        class="w-full bg-[#6C63FF] text-white font-bold text-xs uppercase tracking-widest py-4 rounded-2xl transition-all shadow-[6px_6px_14px_#c8c9d1,-6px_-6px_14px_#ffffff] hover:shadow-[4px_4px_10px_#c8c9d1,-4px_-4px_10px_#ffffff] active:shadow-[inset_4px_4px_8px_#5248d9,inset_-4px_-4px_8px_#867eff] mt-2">
+        Continue
+      </button>
+    </form>
+    
+    <div class="mt-8 pt-6 border-t border-[#E0DFE8] space-y-2.5 text-center">
+      <p class="text-xs text-[#8B8794] font-light">
+        No account? <a href="/app/register.html" class="text-[#6C63FF] font-bold hover:underline ml-1">Register Card</a>
+      </p>
+      <p class="text-xs text-[#8B8794] font-light">
+        <a href="/app/forgot.html" class="text-[#6C63FF] font-bold hover:underline">Forgot password?</a>
+      </p>
+    </div>
+    
+    <p class="text-center text-[10px] leading-relaxed text-[#8B8794] font-light mt-6 bg-[#EEEFF5] p-3 rounded-2xl shadow-[inset_2px_2px_4px_#d8d4dd,inset_-2px_-2px_4px_#ffffff]">
+      Bank staff: sign in with your <span class="font-mono font-bold text-[#6C63FF]">@smartbank.admin</span> cleartext extension to authorize dashboard privileges.
+    </p>
+  </div>
+
+  <div id="step-otp" class="hidden bg-[#F5F6FB] rounded-[32px] p-8 shadow-[10px_10px_24px_#c8c9d1,-10px_-10px_24px_#ffffff] transition-all duration-300">
+    <div class="mb-6">
+      <h2 class="text-xs font-bold uppercase tracking-widest text-[#6C63FF]">Enter Security OTP</h2>
+      <p class="text-[11px] text-[#8B8794] mt-1.5 font-light">A multi-factor authorization block token was passed to your terminal.</p>
+    </div>
+
+    <div id="otp-error" class="hidden mb-5 p-4 bg-[#FFF0F0] rounded-2xl text-[#E05050] text-xs font-semibold tracking-wide shadow-[inset_3px_3px_6px_#d8d4dd,inset_-3px_-3px_6px_#ffffff]"></div>
+
+    <form class="space-y-4" hx-post="/auth/login/verify-otp" hx-ext="json-enc" hx-target="#otp-error" hx-swap="none"
+      hx-on::config-request="prepareOTPRequest(event)"
+      hx-on::after-request="handleOTPResponse(event)">
+      
+      <div class="space-y-2">
+        <label class="block text-[10px] font-bold uppercase tracking-wider text-[#8B8794] text-center">Verification Code</label>
+        <input id="login-otp" name="otp_code" type="text" maxlength="6" placeholder="000000"
+          class="w-full px-4 py-4 bg-[#F5F6FB] rounded-2xl text-xl font-bold font-mono tracking-[0.6em] text-center text-[#2D2B3D] placeholder-[#D0CDDA] focus:outline-none focus:border-[#6C63FF] transition-all shadow-[inset_4px_4px_8px_#d8d4dd,inset_-4px_-4px_8px_#ffffff] focus:shadow-[inset_6px_6px_12px_#c8c9d1,inset_-6px_-6px_12px_#ffffff]"/>
+      </div>
+
+      <button type="submit"
+        class="w-full bg-[#6C63FF] text-white font-bold text-xs uppercase tracking-widest py-4 rounded-2xl transition-all shadow-[6px_6px_14px_#c8c9d1,-6px_-6px_14px_#ffffff] hover:shadow-[4px_4px_10px_#c8c9d1,-4px_-4px_10px_#ffffff] active:shadow-[inset_4px_4px_8px_#5248d9,inset_-4px_-4px_8px_#867eff] mt-2">
+        Verify and sign in
+      </button>
+      
+      <button type="button" onclick="showStep('step-login')"
+        class="w-full text-[11px] font-bold uppercase tracking-wider text-[#8B8794] hover:text-[#6C63FF] transition-colors pt-2">
+        Back to credentials
+      </button>
+    </form>
+  </div>
+</div>
+
+<script src="/app/js/auth.js"></script>
+<script>
+  let currentIdentifier = "";
+
+  if (getToken()) {
+    const u = getStoredUser();
+    postLoginRedirect(u || {});
+  }
+
+  function showStep(id) {
+    document.getElementById("step-login").classList.add("hidden");
+    document.getElementById("step-otp").classList.add("hidden");
+    document.getElementById(id).classList.remove("hidden");
+  }
+
+  function showError(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.classList.remove("hidden");
+  }
+
+  function prepareLoginRequest(event) {
+    const identifier = document.getElementById("login-identifier").value.trim();
+    document.getElementById("login-error").classList.add("hidden");
+    currentIdentifier = identifier;
+  }
+
+  function handleLoginResponse(event) {
+    const data = JSON.parse(event.detail.xhr.responseText || "{}");
+    if (event.detail.xhr.status >= 400) {
+      showError("login-error", data.detail || "Login processing error");
+      return;
+    }
+    showStep("step-otp");
+  }
+
+  function prepareOTPRequest(event) {
+    const otp = document.getElementById("login-otp").value.trim();
+    document.getElementById("otp-error").classList.add("hidden");
+    event.detail.parameters.identifier = currentIdentifier;
+    event.detail.parameters.otp_code = otp;
+  }
+
+  function handleOTPResponse(event) {
+    const data = JSON.parse(event.detail.xhr.responseText || "{}");
+    if (event.detail.xhr.status >= 400) {
+      showError("otp-error", data.detail || "Invalid authorization token");
+      return;
+    }
+    saveTokens(data.access_token, data.refresh_token);
+    localStorage.setItem("user", JSON.stringify(data.user));
+    postLoginRedirect(data.user);
+  }
+</script>
+</body>
+</html>

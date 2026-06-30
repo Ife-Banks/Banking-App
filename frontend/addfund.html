@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="icon" type="image/svg+xml" href="/app/favicon.svg"/>
+  <title>SmartBank — Add Funds</title>
+  <link rel="stylesheet" href="/app/js/tailwind.css"/>
+  <script src="/app/js/htmx.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+    * { font-family: 'Inter', sans-serif; }
+    .card-shine {
+      background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 50%);
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-[#E8EAF3] text-[#2D2B3D] antialiased flex items-center justify-center p-6">
+
+<div class="w-full max-w-sm">
+
+  <nav class="flex justify-between items-center mb-8">
+    <a href="/app/dashboard.html" class="flex items-center gap-2 text-[#8B8794] hover:text-[#2D2B3D] transition-colors">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      <span class="text-xs font-bold uppercase tracking-wider">Back</span>
+    </a>
+    <div class="flex items-center gap-3">
+      <span class="text-xs font-bold text-[#6C63FF] tracking-widest uppercase">SmartBank</span>
+    </div>
+  </nav>
+
+  <div id="step-topup" class="bg-[#F5F6FB] rounded-[32px] p-8 shadow-[10px_10px_24px_#c8c9d1,-10px_-10px_24px_#ffffff]">
+    <div class="text-center mb-8">
+      <div class="w-14 h-14 rounded-2xl bg-[#6C63FF] flex items-center justify-center text-white mx-auto mb-4 shadow-[6px_6px_14px_#c8c9d1,-6px_-6px_14px_#ffffff]">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+      <h1 class="text-sm font-bold uppercase tracking-widest text-[#2D2B3D]">Add Funds</h1>
+      <p class="text-[11px] text-[#8B8794] font-light mt-1">Instant top-up from your card</p>
+    </div>
+
+    <div id="topup-error" class="hidden mb-5 p-4 bg-[#FFF0F0] rounded-2xl text-[#E05050] text-xs font-semibold tracking-wide shadow-[inset_3px_3px_6px_#d8d4dd,inset_-3px_-3px_6px_#ffffff]"></div>
+
+    <form id="topup-form" class="space-y-5" onsubmit="return false;">
+
+      <div class="space-y-1.5">
+        <label class="block text-[10px] font-bold uppercase tracking-wider text-[#8B8794]">Amount</label>
+        <div class="relative">
+          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#8B8794] font-bold">&#x20A6;</span>
+          <input id="topup-amount" name="amount" type="number" min="100" max="500000" step="0.01" placeholder="0.00"
+            class="w-full pl-8 pr-4 py-4 bg-[#F5F6FB] rounded-2xl text-xl font-bold text-[#2D2B3D] placeholder-[#B8B4C4] focus:outline-none transition-all shadow-[inset_4px_4px_8px_#d8d4dd,inset_-4px_-4px_8px_#ffffff] focus:shadow-[inset_6px_6px_12px_#c8c9d1,inset_-6px_-6px_12px_#ffffff]"
+            required/>
+        </div>
+        <p class="text-[10px] text-[#8B8794] text-right">Min: &#x20A6;100 &middot; Max: &#x20A6;500,000</p>
+      </div>
+
+      <div class="pt-4 border-t border-[#E0DFE8]">
+        <p class="text-[10px] font-bold uppercase tracking-wider text-[#8B8794] mb-3">Card Details (Simulated)</p>
+
+        <div class="space-y-3">
+          <div class="relative">
+            <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8B8794]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+            <input id="card-number" name="card_number" type="text" maxlength="19" placeholder="1234 5678 9012 3456"
+              class="w-full pl-11 pr-4 py-3.5 bg-[#F5F6FB] rounded-2xl text-xs font-medium text-[#2D2B3D] placeholder-[#B8B4C4] focus:outline-none transition-all shadow-[inset_4px_4px_8px_#d8d4dd,inset_-4px_-4px_8px_#ffffff] focus:shadow-[inset_6px_6px_12px_#c8c9d1,inset_-6px_-6px_12px_#ffffff]"
+              required/>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="relative">
+              <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8B8794]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              <input id="card-expiry" name="card_expiry" type="text" placeholder="MM/YY" maxlength="5"
+                class="w-full pl-11 pr-4 py-3.5 bg-[#F5F6FB] rounded-2xl text-xs font-medium text-[#2D2B3D] placeholder-[#B8B4C4] focus:outline-none transition-all shadow-[inset_4px_4px_8px_#d8d4dd,inset_-4px_-4px_8px_#ffffff] focus:shadow-[inset_6px_6px_12px_#c8c9d1,inset_-6px_-6px_12px_#ffffff]"
+                required/>
+            </div>
+            <div class="relative">
+              <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8B8794]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+              <input id="card-cvc" name="card_cvc" type="text" placeholder="CVC" maxlength="4"
+                class="w-full pl-11 pr-4 py-3.5 bg-[#F5F6FB] rounded-2xl text-xs font-medium text-[#2D2B3D] placeholder-[#B8B4C4] focus:outline-none transition-all shadow-[inset_4px_4px_8px_#d8d4dd,inset_-4px_-4px_8px_#ffffff] focus:shadow-[inset_6px_6px_12px_#c8c9d1,inset_-6px_-6px_12px_#ffffff]"
+                required/>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-[#E8EAF3] rounded-2xl p-4 text-center">
+        <p class="text-[10px] text-[#8B8794] font-light">
+          This is a simulated top-up. No real card charges will occur.
+        </p>
+      </div>
+
+      <button type="button" id="topup-btn" onclick="submitTopup()"
+        class="w-full bg-[#6C63FF] text-white font-bold text-xs uppercase tracking-widest py-4 rounded-2xl transition-all shadow-[6px_6px_14px_#c8c9d1,-6px_-6px_14px_#ffffff] hover:shadow-[4px_4px_10px_#c8c9d1,-4px_-4px_10px_#ffffff] active:shadow-[inset_4px_4px_8px_#5248d9,inset_-4px_-4px_8px_#867eff]">
+        Add Funds
+      </button>
+    </form>
+  </div>
+
+  <div id="step-success" class="hidden bg-[#F5F6FB] rounded-[32px] p-8 text-center shadow-[10px_10px_24px_#c8c9d1,-10px_-10px_24px_#ffffff]">
+    <div class="w-14 h-14 rounded-2xl bg-[#10B981] flex items-center justify-center text-white mx-auto mb-4 shadow-[6px_6px_14px_#c8c9d1,-6px_-6px_14px_#ffffff]">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+    </div>
+    <h2 class="text-sm font-bold uppercase tracking-widest text-[#2D2B3D] mb-2">Funds Added!</h2>
+    <p id="success-amount" class="text-3xl font-black text-[#6C63FF] mb-1"></p>
+    <p id="success-message" class="text-xs text-[#8B8794] font-light mb-6"></p>
+    <p class="text-xs text-[#8B8794] font-light mb-6">Reference: <span id="success-ref" class="font-mono font-bold text-[#2D2B3D]"></span></p>
+    <a href="/app/dashboard.html" class="block w-full bg-[#6C63FF] hover:bg-[#5A52E0] text-white font-bold text-xs uppercase tracking-widest py-4 rounded-2xl transition-all shadow-[6px_6px_14px_#c8c9d1,-6px_-6px_14px_#ffffff] text-center">
+      Back to Dashboard
+    </a>
+  </div>
+
+</div>
+
+<script src="/app/js/auth.js"></script>
+<script>
+  requireAuth();
+
+  function formatAmount(n) {
+    return "\u20A6" + Number(n).toLocaleString("en-NG", { minimumFractionDigits: 2 });
+  }
+
+  function showError(msg) {
+    const el = document.getElementById("topup-error");
+    el.textContent = Array.isArray(msg) ? msg.map(e => e.msg).join("; ") : msg;
+    el.classList.remove("hidden");
+  }
+
+  function clearError() {
+    document.getElementById("topup-error").classList.add("hidden");
+  }
+
+  async function submitTopup() {
+    clearError();
+
+    const amount = parseFloat(document.getElementById("topup-amount").value);
+    const card = document.getElementById("card-number").value.replace(/\s/g, "");
+    const expiry = document.getElementById("card-expiry").value;
+    const cvc = document.getElementById("card-cvc").value;
+
+    if (!amount || amount < 100) {
+      showError("Amount must be at least \u20A6 100");
+      return;
+    }
+    if (amount > 500000) {
+      showError("Amount cannot exceed \u20A6 500,000");
+      return;
+    }
+    if (card.length < 16) {
+      showError("Enter a valid 16-digit card number");
+      return;
+    }
+
+    const btn = document.getElementById("topup-btn");
+    btn.disabled = true;
+    btn.textContent = "Processing...";
+
+    try {
+      const token = localStorage.getItem("access_token");
+      const res = await fetch("/accounts/topup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + token,
+        },
+        body: JSON.stringify({ amount, card_number: card, card_expiry: expiry, card_cvc: cvc }),
+      });
+
+      const data = await res.json();
+      if (res.status >= 400) {
+        showError(data.detail || "Top-up failed");
+        return;
+      }
+
+      document.getElementById("step-topup").classList.add("hidden");
+      document.getElementById("step-success").classList.remove("hidden");
+      document.getElementById("success-amount").textContent = formatAmount(data.amount);
+      document.getElementById("success-message").textContent = data.message;
+      document.getElementById("success-ref").textContent = data.reference;
+    } catch (e) {
+      showError("Network error. Please try again.");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Add Funds";
+    }
+  }
+
+  const cardInput = document.getElementById("card-number");
+  if (cardInput) {
+    cardInput.addEventListener("input", function (e) {
+      let val = e.target.value.replace(/\D/g, "").substring(0, 16);
+      val = val.replace(/(.{4})/g, "$1 ").trim();
+      e.target.value = val;
+    });
+  }
+
+  const expiryInput = document.getElementById("card-expiry");
+  if (expiryInput) {
+    expiryInput.addEventListener("input", function (e) {
+      let val = e.target.value.replace(/\D/g, "").substring(0, 4);
+      if (val.length >= 2) val = val.substring(0, 2) + "/" + val.substring(2);
+      e.target.value = val;
+    });
+  }
+
+  const cvcInput = document.getElementById("card-cvc");
+  if (cvcInput) {
+    cvcInput.addEventListener("input", function (e) {
+      e.target.value = e.target.value.replace(/\D/g, "").substring(0, 4);
+    });
+  }
+</script>
+</body>
+</html>

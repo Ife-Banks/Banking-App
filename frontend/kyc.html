@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="icon" type="image/svg+xml" href="/app/favicon.svg"/>
+  <title>SmartBank — KYC Upgrade</title>
+  <link rel="stylesheet" href="/app/js/tailwind.css"/>
+  <script src="/app/js/htmx.js"></script>
+  <script src="/app/js/json-enc.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+    * { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="min-h-screen bg-[#E8EAF3] text-[#2D2B3D] antialiased">
+
+<nav class="bg-[#F5F6FB] border-b border-[#E0DFE8] px-6 py-4 flex justify-between items-center shadow-[0_4px_12px_#d0d1da]">
+  <a href="/app/dashboard.html" class="text-[#2D2B3D] font-black text-lg tracking-widest uppercase">SmartBank</a>
+  <button onclick="logout()" class="text-xs font-semibold uppercase tracking-wider text-[#8B8794] hover:text-[#E05050] transition-colors">Sign out</button>
+</nav>
+
+<main class="max-w-md mx-auto p-6 space-y-6">
+  <a href="/app/dashboard.html" class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#8B8794] hover:text-[#6C63FF] transition-colors mb-2">
+    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+    Back to dashboard
+  </a>
+
+  <!-- Current status -->
+  <div id="kyc-status" class="bg-[#F5F6FB] rounded-[32px] p-7 shadow-[10px_10px_24px_#c8c9d1,-10px_-10px_24px_#ffffff]">
+    <p class="text-[11px] text-[#8B8794] font-medium">Current tier</p>
+    <p id="current-tier" class="text-2xl font-bold text-[#2D2B3D] mt-1">—</p>
+    <div id="tier-limits" class="mt-3 text-[11px] text-[#8B8794] space-y-1"></div>
+  </div>
+
+  <!-- Upgrade form -->
+  <div id="step-form" class="bg-[#F5F6FB] rounded-[32px] p-8 shadow-[10px_10px_24px_#c8c9d1,-10px_-10px_24px_#ffffff]">
+    <h2 class="text-xs font-bold uppercase tracking-widest text-[#6C63FF] mb-2">Upgrade to Tier 2</h2>
+    <p class="text-[11px] text-[#8B8794] font-light mb-6">Enter your NIN to verify your identity and unlock higher limits.</p>
+    <div id="kyc-error" class="hidden mb-4 p-4 bg-[#FFF0F0] rounded-2xl text-[#E05050] text-xs font-semibold shadow-[inset_3px_3px_6px_#d8d4dd,inset_-3px_-3px_6px_#ffffff]"></div>
+
+    <form id="kyc-form" class="space-y-4" hx-post="/kyc/upgrade" hx-ext="json-enc"
+      hx-target="#kyc-error" hx-swap="none"
+      hx-on::config-request="prepareKYCRequest(event)"
+      hx-on::after-request="handleKYCResponse(event)">
+      <div class="space-y-1.5">
+        <label class="block text-[10px] font-bold uppercase tracking-wider text-[#8B8794]">National Identification Number (NIN)</label>
+        <input id="kyc-nin" name="nin" type="text" maxlength="11" placeholder="11-digit NIN"
+          class="w-full px-4 py-3.5 bg-[#F5F6FB] rounded-2xl text-xs font-medium text-[#2D2B3D] placeholder-[#B8B4C4] focus:outline-none transition-all shadow-[inset_4px_4px_8px_#d8d4dd,inset_-4px_-4px_8px_#ffffff] focus:shadow-[inset_6px_6px_12px_#c8c9d1,inset_-6px_-6px_12px_#ffffff]"/>
+      </div>
+      <button type="submit"
+        class="w-full bg-[#6C63FF] hover:bg-[#5A52E0] text-white font-bold text-xs uppercase tracking-widest py-4 rounded-2xl transition-all shadow-[6px_6px_14px_#c8c9d1,-6px_-6px_14px_#ffffff] active:shadow-[inset_4px_4px_8px_#5248d9,inset_-4px_-4px_8px_#867eff]">
+        Verify identity
+      </button>
+    </form>
+
+    <div class="mt-6 p-4 bg-[#EEEFF5] rounded-2xl shadow-[inset_3px_3px_6px_#d8d4dd,inset_-3px_-3px_6px_#ffffff]">
+      <p class="text-[10px] font-bold text-[#8B8794] uppercase tracking-wider mb-2">After upgrade your limits become:</p>
+      <p class="text-[11px] text-[#8B8794]">Single transfer: <span class="font-semibold text-[#2D2B3D]">&#x20A6;200,000</span></p>
+      <p class="text-[11px] text-[#8B8794]">Daily limit: <span class="font-semibold text-[#2D2B3D]">&#x20A6;500,000</span></p>
+    </div>
+  </div>
+
+  <!-- Success -->
+  <div id="step-success" class="hidden bg-[#F5F6FB] rounded-[32px] p-8 text-center shadow-[10px_10px_24px_#c8c9d1,-10px_-10px_24px_#ffffff]">
+    <div class="w-14 h-14 rounded-2xl bg-[#10B981] flex items-center justify-center text-white mx-auto mb-4 shadow-[4px_4px_10px_#c8c9d1,-4px_-4px_10px_#ffffff]">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+      </svg>
+    </div>
+    <h2 class="text-sm font-bold uppercase tracking-widest text-[#2D2B3D] mb-2">Upgraded to Tier 2</h2>
+    <p class="text-xs text-[#8B8794] font-light mb-6">Your transfer limits have been increased.</p>
+    <a href="/app/dashboard.html"
+      class="block w-full bg-[#6C63FF] hover:bg-[#5A52E0] text-white font-bold text-xs uppercase tracking-widest py-4 rounded-2xl transition-all shadow-[6px_6px_14px_#c8c9d1,-6px_-6px_14px_#ffffff] active:shadow-[inset_4px_4px_8px_#5248d9,inset_-4px_-4px_8px_#867eff]">
+      Back to dashboard
+    </a>
+  </div>
+
+  <div id="kyc-loaders" class="hidden">
+    <div id="load-kyc-status" hx-get="/kyc/status" hx-trigger="load" hx-swap="none"
+      hx-on::after-request="renderKYCStatus(event)"></div>
+  </div>
+</main>
+
+<script src="/app/js/auth.js"></script>
+<script>
+  requireAuth();
+
+  function renderKYCStatus(event) {
+    const response = event.detail.xhr;
+    if (!response || response.status >= 400) return;
+
+    const data = JSON.parse(response.responseText || "{}");
+    document.getElementById("current-tier").textContent =
+      data.kyc_tier.replace("_", " ").replace(/\b\w/g, c => c.toUpperCase());
+    document.getElementById("tier-limits").innerHTML = `
+      <p>Single transfer limit: <span class="font-medium text-[#2D2B3D]">${data.limits.single}</span></p>
+      <p>Daily limit: <span class="font-medium text-[#2D2B3D]">${data.limits.daily}</span></p>`;
+    if (data.kyc_tier !== "tier_1") {
+      document.getElementById("step-form").innerHTML =
+        `<p class="text-[#8B8794] text-xs text-center py-4">You are already on ${data.kyc_tier}. Contact admin for Tier 3 upgrade.</p>`;
+    }
+  }
+
+  function prepareKYCRequest(event) {
+    const nin = document.getElementById("kyc-nin").value.trim();
+    const errorEl = document.getElementById("kyc-error");
+    errorEl.classList.add("hidden");
+
+    if (!nin) {
+      event.preventDefault();
+      errorEl.textContent = "Please enter your NIN.";
+      errorEl.classList.remove("hidden");
+      return;
+    }
+
+    event.detail.parameters.nin = nin;
+  }
+
+  function handleKYCResponse(event) {
+    const response = event.detail.xhr;
+    const data = JSON.parse(response.responseText || "{}");
+
+    if (response.status >= 400) {
+      const el = document.getElementById("kyc-error");
+      el.textContent = data.detail || "Upgrade failed";
+      el.classList.remove("hidden");
+      return;
+    }
+
+    document.getElementById("step-form").classList.add("hidden");
+    document.getElementById("step-success").classList.remove("hidden");
+  }
+</script>
+</body>
+</html>
