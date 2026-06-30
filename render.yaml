@@ -6,7 +6,7 @@ services:
     region: oregon
     plan: free
     buildCommand: bash build.sh
-    startCommand: bash start.sh
+    startCommand: PATH="/usr/local/bin:$PATH" && alembic upgrade head && python3 -m uvicorn app.main:app --host 0.0.0.0 --port "${PORT:-10000}"
     healthCheckPath: /
     envVars:
       - key: DATABASE_URL
