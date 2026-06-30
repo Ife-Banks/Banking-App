@@ -1,8 +1,9 @@
 #!/bin/bash
 set -e
 
-echo "=== Installing Python dependencies ==="
-pip install -r requirements.txt
+echo "=== Installing Python dependencies (fresh) ==="
+pip install --upgrade pip
+pip install -r requirements.txt --no-cache-dir
 
 echo "=== Building Tailwind CSS ==="
 cd frontend
