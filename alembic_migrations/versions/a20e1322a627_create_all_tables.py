@@ -1,4 +1,4 @@
-"""create all tables
+﻿"""create all tables
 
 Revision ID: a20e1322a627
 Revises: 
